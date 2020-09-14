@@ -12,9 +12,18 @@ if [ "$1" == "dontstarve_dedicated_server_nullrenderer" ] || [ "$1" == "supervis
     # create default server config if there is none
     if [ ! -d "${DST_USER_DATA_PATH}/DoNotStarveTogether" ]; then
         echo "Creating default server config..."
-	mkdir -p "${DST_USER_DATA_PATH}"
-        cp -r /opt/dst_default_config/* "${DST_USER_DATA_PATH}"
-        touch "${DST_USER_DATA_PATH}/DoNotStarveTogether/Cluster_1/cluster_token.txt"
+        mkdir -p "${DST_USER_DATA_PATH}"
+        cp -r /opt/dst_default_config/* /data
+        touch /data/DoNotStarveTogether/Cluster_1/cluster_token.txt
+        chown -R dst:dst /data
+
+        CLUSTER_TOKEN=${CLUSTER_TOKEN:-""}
+        if [ -z "$CLUSTER_TOKEN" ] ; then
+            echo "Done, please fill in \`DoNotStarveTogether/Cluster_1/cluster_token.txt\` with your cluster token and restart server!"
+            exit
+        else
+            echo $CLUSTER_TOKEN > /data/DoNotStarveTogether/Cluster_1/cluster_token.txt
+        fi
     fi
 
     # fill cluster token from environment variable
@@ -38,6 +47,55 @@ if [ "$1" == "dontstarve_dedicated_server_nullrenderer" ] || [ "$1" == "supervis
 
     # fix permission
     chown -R "${DST_USER}:${DST_GROUP}" "${DST_USER_DATA_PATH}"
+
+    MOD_LIST=${MOD_LIST:-""}
+    if [ ! -z "$MOD_LIST" ]; then
+        echo "" > /data/DoNotStarveTogether/Cluster_1/mods/dedicated_server_mods_setup.lua
+        echo "return {" | tee /data/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua /data/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua 1>/dev/null
+        IFS=';' read -ra ADDR <<< "$MOD_LIST"
+        first=true
+        for i in "${ADDR[@]}"; do
+            if ! $first ; then
+                echo "," | tee -a /data/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua /data/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua 1>/dev/null
+            fi
+            first=false
+            echo -n "[\"workshop-"$i"\"] = { enabled = true }" | tee -a /data/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua /data/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua 1>/dev/null
+
+            echo "ServerModSetup(\""$i"\")" >> /data/DoNotStarveTogether/Cluster_1/mods/dedicated_server_mods_setup.lua
+        done
+        echo "" | tee -a /data/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua /data/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua 1>/dev/null
+        echo "}" | tee -a /data/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua /data/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua 1>/dev/null
+    fi
+
+    PASSWORD=${PASSWORD:-""}
+    if [ ! -z "$PASSWORD" ]; then
+        sed -i "s/cluster_password =.*/cluster_password = $PASSWORD/" /data/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    NAME=${NAME:-""}
+    if [ ! -z "$NAME" ]; then
+        sed -i "s/cluster_name = .*/cluster_name = $NAME/" /data/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    DESCRIPTION=${DESCRIPTION:-""}
+    if [ ! -z "$DESCRIPTION" ]; then
+        sed -i "s/cluster_description = .*/cluster_description = $DESCRIPTION/" /data/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    GAME_MODE=${GAME_MODE:-""}
+    if [ ! -z "$GAME_MODE" ]; then
+        sed -i "s/game_mode = .*/game_mode = $GAME_MODE/" /data/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    PVP=${PVP:-""}
+    if [ ! -z "$PVP" ]; then
+        sed -i "s/pvp = .*/pvp = $PVP/" /data/DoNotStarveTogether/Cluster_1/cluster.ini 
+    fi
+
+    CLUSTER_INTENTION=${CLUSTER_INTENTION:-""}
+    if [ ! -z "$CLUSTER_INTENTION" ]; then
+        sed -i "s/cluster_intention = .*/cluster_intention = $CLUSTER_INTENTION/" /data/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
 
     # Update game
     # note that the update process modifies (resets) the mods folder so we symlink that later

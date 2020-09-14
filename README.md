@@ -2,7 +2,7 @@
 
 They write their server setup instructions like sh*t, so we made this Docker image to simplify things.
 
-Please read the whole document before putting your hands on your server. 
+Please read the whole document before putting your hands on your server.
 
 [![Build Status](https://dev.azure.com/nekomimiswitch/General/_apis/build/status/docker-dst-server?branchName=master)](https://dev.azure.com/nekomimiswitch/General/_build/latest?definitionId=80&branchName=master)
 
@@ -24,12 +24,12 @@ All variants except `latest` is built using Azure DevOps CI. The `latest` varian
 
 ### Prerequisites
 
- * Linux x86_64 and runs Docker (18.05.0-ce or later).
- * You may need a public IP to make your server accessable from Internet. 
- * You need 4 UDP ports exposed to the public network. (See FAQ for details.)
- * CPU: 1 core is somewhat enough for a small-scale server (but don't try 60 ticks, start from 15 or 30).
- * Memory: We recommend reserving 1GiB Memory for the server, plus 60MiB per active user.
- * Disk size: the Docker image takes 1.5GiB, and you need at least another 5MiB for maps, configs and logs. 4GiB available disk space is recommended.
+* Linux x86_64 and runs Docker (18.05.0-ce or later).
+* You may need a public IP to make your server accessable from Internet.
+* You need 4 UDP ports exposed to the public network. (See FAQ for details.)
+* CPU: 1 core is somewhat enough for a small-scale server (but don't try 60 ticks, start from 15 or 30).
+* Memory: We recommend reserving 1GiB Memory for the server, plus 60MiB per active user.
+* Disk size: the Docker image takes 1.5GiB, and you need at least another 5MiB for maps, configs and logs. 4GiB available disk space is recommended.
 
 ### Start server
 
@@ -47,14 +47,15 @@ If you use `docker-compose`, an [example config](https://github.com/Jamesits/doc
 
 Just press `Ctrl+C` and wait a little while to let itself spin down. (If the server is saving data, don't press ^C twice to force kill the server.)
 
-To programmatically shut down the server, send a SIGINT to the `supervisord` process. 
+To programmatically shut down the server, send a SIGINT to the `supervisord` process.
 
 Note: the server may take up to ~5min to save map and fully shut down.
- 
+
 ## Server Configuration
 
 If you don't already have a set of server config in your data directory, we will generate one for you. Start server once using the command above, and you will see:
-```
+
+```bash
 Creating default server config...
 Please fill in `DoNotStarveTogether/Cluster_1/cluster_token.txt` with your cluster token and restart server!
 ```
@@ -95,42 +96,43 @@ There are some arguments you can set via `--build-arg`:
 
 ## Known Issues
 
- * On Docker environment which doesn't support UDP port forwarding, LAN only server cannot be used. (Still you can enable Steam punchthrough and search for your server in `Online` catalog. )
- * Docker IPv6 support is another sh\*t and we currently don't have any idea on it. Help and advices are always welcomed. (see [#7](https://github.com/Jamesits/docker-dst-server/issues/7).)
+* On Docker environment which doesn't support UDP port forwarding, LAN only server cannot be used. (Still you can enable Steam punchthrough and search for your server in `Online` catalog. )
+* Docker IPv6 support is another sh\*t and we currently don't have any idea on it. Help and advices are always welcomed. (see [#7](https://github.com/Jamesits/docker-dst-server/issues/7).)
 
 ## FAQ
 
-#### How to update server or mods?
+### How to update server or mods?
 
 Restart the server. Updates will be downloaded automatically.
 
-#### How to connect to a LAN only server?
+### How to connect to a LAN only server?
 
 Run `c_connect("IP address", port)` or `c_connect("IP address", port, "password")` in client console.
 
-#### How to check if the server is online?
+### How to check if the server is online?
 
 You can try the 3rd party website [Don't Starve Together Server List](https://dstserverlist.appspot.com).
 
-#### What port does this server require?
+### What port does this server require?
 
 You need to expose UDP 10999 (master) and 11000 (caves) for client to connect; udp 12346 and 12347 for steam connection. Don't NAT these ports to different port numbers.
 
 The server use another 2 high UDP ports for unknown communication, and UDP 10998 (listen on localhost) for communication between cluster servers.
 
 Here is a `netstat -tulpn` output on our test server:
-```
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
-udp        0      0 0.0.0.0:12346           0.0.0.0:*                           54/./dontstarve_ded 
-udp        0      0 0.0.0.0:12347           0.0.0.0:*                           53/./dontstarve_ded 
-udp        0      0 0.0.0.0:38223           0.0.0.0:*                           53/./dontstarve_ded 
-udp        0      0 0.0.0.0:36517           0.0.0.0:*                           54/./dontstarve_ded 
-udp        0      0 127.0.0.1:10998         0.0.0.0:*                           54/./dontstarve_ded 
-udp        0      0 0.0.0.0:10999           0.0.0.0:*                           54/./dontstarve_ded 
-udp        0      0 0.0.0.0:11000           0.0.0.0:*                           53/./dontstarve_ded 
+
+```bash
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+udp        0      0 0.0.0.0:12346           0.0.0.0:*                           54/./dontstarve_ded
+udp        0      0 0.0.0.0:12347           0.0.0.0:*                           53/./dontstarve_ded
+udp        0      0 0.0.0.0:38223           0.0.0.0:*                           53/./dontstarve_ded
+udp        0      0 0.0.0.0:36517           0.0.0.0:*                           54/./dontstarve_ded
+udp        0      0 127.0.0.1:10998         0.0.0.0:*                           54/./dontstarve_ded
+udp        0      0 0.0.0.0:10999           0.0.0.0:*                           54/./dontstarve_ded
+udp        0      0 0.0.0.0:11000           0.0.0.0:*                           53/./dontstarve_ded
 ```
 
-#### Error! App '343050' state is 0x202 after update job.
+### Error! App '343050' state is 0x202 after update job
 
 Your disk is full.
 
@@ -140,10 +142,11 @@ Usually there is a file system permission issue preventing steamcmd from writing
 
 #### Client high latency or lagging
 
+
 Possible causes:
 
 * High packet drop rate
-* High server tick rate with low-performance clients (e.g. notebook users with tick rate 60) 
+* High server tick rate with low-performance clients (e.g. notebook users with tick rate 60)
 
 #### How can I copy local data to server?
 
@@ -178,6 +181,7 @@ Open `Cluster_1/mods/dedicated_server_mods_setup.lua` on server and write `Serve
  
 ## License
 
+```text
     Don't Starve Together Dedicated Server Docker Image
     Copyright (C) 2015-2018 James Swineson (Jamesits) and Mingye Wang (Arthur2e5)
 
@@ -194,9 +198,10 @@ Open `Cluster_1/mods/dedicated_server_mods_setup.lua` on server and write `Serve
     You should have received a copy of the GNU General Public License along
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+```
 
 ## References
 
- * [How to setup dedicated server with cave on Linux](https://steamcommunity.com/sharedfiles/filedetails/?id=590565473)
- * [How to install,configure and update mods on Dedicated Server](https://steamcommunity.com/sharedfiles/filedetails/?id=591543858)
- * [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD)
+* [How to setup dedicated server with cave on Linux](https://steamcommunity.com/sharedfiles/filedetails/?id=590565473)
+* [How to install,configure and update mods on Dedicated Server](https://steamcommunity.com/sharedfiles/filedetails/?id=591543858)
+* [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD)
