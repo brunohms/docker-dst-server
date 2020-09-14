@@ -4,16 +4,21 @@ They write their server setup instructions like sh*t, so we made this Docker ima
 
 Please read the whole document before putting your hands on your server.
 
-[![Build Status](https://dev.azure.com/nekomimiswitch/General/_apis/build/status/Don't%20Starve%20Together)](https://dev.azure.com/nekomimiswitch/General/_build/latest?definitionId=4)
+[![Build Status](https://dev.azure.com/nekomimiswitch/General/_apis/build/status/docker-dst-server?branchName=master)](https://dev.azure.com/nekomimiswitch/General/_build/latest?definitionId=80&branchName=master)
 
 ----------
 
 ## Versioning
 
-The server code changes a lot. We offer 2 update channels on [Docker Hub](https://hub.docker.com/r/jamesits/dst-server/):
+The DST server code changes a lot. We offer multiple variants (tags) on [Docker Hub](https://hub.docker.com/r/jamesits/dst-server/):
 
-* `jamesits/dst-server:latest` is a less frequently updated image (it is only updated when Dockerfile changes), and the server code will be updated on every launch
-* `jamesits/dst-server:nightly` is a nightly built image, so it (hopefully) comes with the latest server code (the server code will still be updated on every launch)
+* `latest` or `vanilla` are less frequently updated images, recommended for day-to-day use
+* `nightly` is a nightly built image, so it (hopefully) comes with the latest server code
+* `steamcmd-rebase` works the same way as `latest` but is based on [`cm2network/steamcmd:root`](https://hub.docker.com/r/cm2network/steamcmd)
+
+All variants except `nightly` also have a `-slim` tagged version which does not come with DST server pre-installed; required files will be downloaded every time the container is launched. The `-slim` versions cannot be launched offline.
+
+All variants except `latest` is built using Azure DevOps CI. The `latest` variant is built using Docker Hub's autobuild.
 
 ## Running
 
@@ -52,19 +57,19 @@ If you don't already have a set of server config in your data directory, we will
 
 ```bash
 Creating default server config...
-Done, please fill in `DoNotStarveTogether/Cluster_1/cluster_token.txt` with your cluster token and restart server!
+Please fill in `DoNotStarveTogether/Cluster_1/cluster_token.txt` with your cluster token and restart server!
 ```
 
 To generate a cluster token (as of 2019-11-02):
 
-1. Open a genius copy of Don't Starve Together client and log in
+1. Open a genuine copy of Don't Starve Together client and log in
 2. Click "Play" to go to the main menu
 3. click "account" button on the bottom left of the main menu
 4. In the popup browser, click "GAMES" on the top nav bar
 5. Click "Don't Starve Toegther Servers" button on the top right
 6. Scroll down to "ADD NEW SERVER" section, fill in a server name (it is not important), and copy the generated token
 
-The token looks like `pds-g^aaaaaaaaa-q^jaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=`. Then open `your_data_directory/DoNotStarveTogether/Cluster_1/cluster_token.txt` on your server using any text editor, paste the token, save.
+The token looks like `pds-g^aaaaaaaaa-q^jaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=`. Then either set `DST_CLUSTER_TOKEN` environment variable during `docker run`, or paste the token into `your_data_directory/DoNotStarveTogether/Cluster_1/cluster_token.txt`.
 
 If you need to add mods, change world generation config, etc., please do it now. Don't forget to edit `your_data_directory/DoNotStarveTogether/Cluster_1/cluster.ini` and get your server an unique name!
 
@@ -79,6 +84,15 @@ git clone https://github.com/Jamesits/docker-dst-server.git docker-dst-server
 cd docker-dst-server
 docker build . -t dst-server:latest
 ```
+
+There are some arguments you can set via `--build-arg`:
+
+* `BASE_IMAGE`: the `FROM` image (recent Debian or Ubuntu based images are supported)
+* `STEAMCMD_PATH`: where is `steamcmd.sh` in the base image
+* `DST_DOWNLOAD`: set to `1` to embed DST server into the image
+* `DST_USER`: the user to run server as (inside container)
+* `DST_GROUP`: the group to run server as (inside container)
+
 
 ## Known Issues
 
@@ -122,29 +136,49 @@ udp        0      0 0.0.0.0:11000           0.0.0.0:*                           
 
 Your disk is full.
 
-### Client high latency or lagging
+#### Error! App '343050' state is 0x602 after update job.
+
+Usually there is a file system permission issue preventing steamcmd from writing to your game installation directory.
+
+#### Client high latency or lagging
+
 
 Possible causes:
 
 * High packet drop rate
 * High server tick rate with low-performance clients (e.g. notebook users with tick rate 60)
 
-----------
+#### How can I copy local data to server?
+
+Local data is stored in `<User Documents>\Klei\DoNotStarveTogether\<Random Number>`.
+
+There are two situations:
+1. Local data has cave enabled.\
+Just copy the `Cluster_X` to server and rename to `Cluster_1`, then it should work.
+2. Local data has no cave.\
+Copy everything in `client_save` except `session` and `Cluster_X/save/session` to server `Cluster_1/save`.\
+If your local data is not in slot 1, you also have to modify `saveindex` because the server recognize only the first slot.\
+The server will create a cave for you. If you don't want the cave, you have to modify `supervisor.conf` to disable cave server.
+
+#### How can I enable mods after copy local data to server?
+
+Open `Cluster_X/Master/modoverrides.lua` and you will see something like `workshop-XXXXX` where `XXXXX` is a number.\
+Open `Cluster_1/mods/dedicated_server_mods_setup.lua` on server and write `ServerModSetup("XXXXX")`.
 
 ## Maintainer
 
-* [James Swineson](https://swineson.me)
-* [Mingye Wang](https://github.com/Arthur2e5)
-
+ * [James Swineson](https://swineson.me)
+ 
 ## Thanks
 
-* [@MephistoMMM](https://github.com/MephistoMMM)
-* [@m13253](https://github.com/m13253)
-* [@wph95](https://github.com/wph95)
-* [DaoCloud](https://daocloud.io)
-* [CodeVS](http://codevs.cn/)
-* [I Choose Death Too](https://steamcommunity.com/id/ichoosedeathtoo/)
-
+ * [Mingye Wang](https://github.com/Arthur2e5)
+ * [@MephistoMMM](https://github.com/MephistoMMM)
+ * [@m13253](https://github.com/m13253)
+ * [@wph95](https://github.com/wph95)
+ * [DaoCloud](https://daocloud.io)
+ * [CodeVS](http://codevs.cn/)
+ * [I Choose Death Too](https://steamcommunity.com/id/ichoosedeathtoo/)
+ 
 ## License
 
 ```text
